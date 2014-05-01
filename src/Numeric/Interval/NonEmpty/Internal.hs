@@ -145,6 +145,8 @@ inf (I a _) = a
 --
 -- >>> sup (1 ... 20)
 -- 20
+--
+-- prop> sup x `elem` x
 sup :: Interval a -> a
 sup (I _ b) = b
 {-# INLINE sup #-}
