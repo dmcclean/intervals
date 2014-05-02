@@ -122,7 +122,7 @@ interval a b
 -- >>> whole
 -- -Infinity ... Infinity
 --
--- prop> \(x :: Double) -> x `elem` whole
+-- prop> \x -> (x :: Double) `elem` whole
 whole :: Fractional a => Interval a
 whole = I negInfinity posInfinity
 {-# INLINE whole #-}
@@ -147,8 +147,6 @@ inf (I a _) = a
 --
 -- >>> sup (1 ... 20)
 -- 20
---
--- prop> sup x `elem` x
 sup :: Interval a -> a
 sup (I _ b) = b
 {-# INLINE sup #-}
