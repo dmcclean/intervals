@@ -121,6 +121,8 @@ interval a b
 --
 -- >>> whole
 -- -Infinity ... Infinity
+--
+-- prop> \(x :: Double) -> x `elem` whole
 whole :: Fractional a => Interval a
 whole = I negInfinity posInfinity
 {-# INLINE whole #-}
