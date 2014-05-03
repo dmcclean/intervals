@@ -701,6 +701,8 @@ possibly cmp l r
 {-# INLINE possibly #-}
 
 -- | The nearest value to that supplied which is contained in the interval.
+--
+-- prop> (clamp xs y) `elem` xs
 clamp :: Ord a => Interval a -> a -> a
 clamp (I a b) x
   | x < a     = a
@@ -714,6 +716,8 @@ clamp (I a b) x
 --
 -- >>> inflate (-2) (0 ... 4)
 -- -2 ... 6
+--
+-- prop> inflate x i `contains` i
 inflate :: (Num a, Ord a) => a -> Interval a -> Interval a
 inflate x y = symmetric x + y
 
@@ -725,6 +729,8 @@ inflate x y = symmetric x + y
 --
 -- >>> deflate 2.0 (-1.0 ... 1.0)
 -- 0.0 ... 0.0
+--
+-- prop> i `contains` (deflate (x :: Double) i)
 deflate :: (Fractional a, Ord a) => a -> Interval a -> Interval a
 deflate x i@(I a b) | a' <= b'  = I a' b'
                     | otherwise = singleton m
@@ -740,6 +746,8 @@ deflate x i@(I a b) | a' <= b'  = I a' b'
 --
 -- >>> scale (-2.0) (-1.0 ... 1.0)
 -- -2.0 ... 2.0
+--
+-- prop> x >=1 ==> (scale (x :: Double) i) `contains` i
 scale :: (Fractional a, Ord a) => a -> Interval a -> Interval a
 scale x i = a ... b where
   h = x * width i / 2
