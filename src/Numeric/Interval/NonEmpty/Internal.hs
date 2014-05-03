@@ -41,7 +41,7 @@ module Numeric.Interval.NonEmpty.Internal
   , certainly, (<!), (<=!), (==!), (>=!), (>!)
   , possibly, (<?), (<=?), (==?), (>=?), (>?)
   , clamp
-  , inflate, deflate
+  , inflate, deflate, inflate'
   , scale, symmetric
   , idouble
   , ifloat
@@ -710,19 +710,31 @@ clamp (I a b) x
   | otherwise = x
 
 -- | Inflate an interval by enlarging it at both ends.
+-- Inflation by a negative amount is deflation. Deflation that would result in an empty interval results in a singleton interval at the midpoint.
 --
--- >>> inflate 3 (-1 ... 7)
--- -4 ... 10
+-- >>> inflate 3.0 (-1.0 ... 7.0)
+-- -4.0 ... 10.0
 --
--- >>> inflate (-2) (0 ... 4)
--- -2 ... 6
+-- >>> inflate (-1.0) (0.0 ... 4.0)
+-- 1.0 ... 3.0
 --
--- prop> inflate x i `contains` i
-inflate :: (Num a, Ord a) => a -> Interval a -> Interval a
-inflate x y = symmetric x + y
+-- prop> (x :: Double) >= 0 ==> inflate x i `contains` i
+-- prop> (x :: Double) <= 0 ==> i `contains` inflate x i
+inflate :: (Fractional a, Ord a) => a -> Interval a -> Interval a
+inflate x | x >= 0    = (+ symmetric x)
+          | otherwise = deflate (negate x)
+
+-- | Inflate an interval.
+-- Inflation by a negative amount is an error. As a result the `Fractional` context of `inflate` is not required.
+--
+-- prop> (x :: Integer) >= 0 ==> inflate' x i `contains` i
+inflate' :: (Num a, Ord a) => a -> Interval a -> Interval a
+inflate' x | x >= 0    = (+ symmetric x)
+           | otherwise = error "inflate' by negative amount"
 
 -- | Deflate an interval by shrinking it from both ends.
 -- Note that in cases that would result in an empty interval, the result is a singleton interval at the midpoint.
+-- Deflation by a negative amount is inflation.
 --
 -- >>> deflate 3.0 (-4.0 ... 10.0)
 -- -1.0 ... 7.0
@@ -730,7 +742,8 @@ inflate x y = symmetric x + y
 -- >>> deflate 2.0 (-1.0 ... 1.0)
 -- 0.0 ... 0.0
 --
--- prop> i `contains` (deflate (x :: Double) i)
+-- prop> (x :: Double) >= 0 ==> i `contains` deflate x i
+-- prop> (x :: Double) <= 0 ==> deflate x i `contains` i
 deflate :: (Fractional a, Ord a) => a -> Interval a -> Interval a
 deflate x i@(I a b) | a' <= b'  = I a' b'
                     | otherwise = singleton m
