@@ -59,6 +59,17 @@ import Numeric.Interval.Exception
 import Prelude hiding (null, elem, notElem)
 
 -- $setup
+-- >>> import Test.QuickCheck.Arbitrary
+-- >>> import Test.QuickCheck.Gen
+-- >>> import Test.QuickCheck.Property
+-- >>> import Control.Applicative
+-- >>> :set -XNoMonomorphismRestriction
+-- >>> :set -XExtendedDefaultRules
+-- >>> default (Integer,Double)
+-- >>> instance (Ord a, Arbitrary a) => Arbitrary (Interval a) where arbitrary = (...) <$> arbitrary <*> arbitrary
+-- >>> let conservative sf f xs = forAll (choose (inf xs, sup xs)) $ \x -> (sf x) `elem` (f xs)
+
+--  conservative :: (a -> a) -> (Interval a -> Interval a) -> Interval a -> Bool
 
 data Interval a = I !a !a deriving
   ( Data
@@ -122,7 +133,7 @@ interval a b
 -- >>> whole
 -- -Infinity ... Infinity
 --
--- prop> \x -> (x :: Double) `elem` whole
+-- prop> (x :: Double) `elem` whole
 whole :: Fractional a => Interval a
 whole = I negInfinity posInfinity
 {-# INLINE whole #-}
@@ -131,6 +142,9 @@ whole = I negInfinity posInfinity
 --
 -- >>> singleton 1
 -- 1 ... 1
+--
+-- prop> x `elem` (singleton x)
+-- prop> x /= y ==> y `notElem` (singleton x)
 singleton :: a -> Interval a
 singleton a = I a a
 {-# INLINE singleton #-}
@@ -139,6 +153,9 @@ singleton a = I a a
 --
 -- >>> inf (1 ... 20)
 -- 1
+--
+-- prop> min x y == inf (x ... y)
+-- prop> inf x <= sup x
 inf :: Interval a -> a
 inf (I a _) = a
 {-# INLINE inf #-}
@@ -147,6 +164,9 @@ inf (I a _) = a
 --
 -- >>> sup (1 ... 20)
 -- 20
+--
+-- prop> max x y == sup (x ... y)
+-- prop> inf x <= sup x
 sup :: Interval a -> a
 sup (I _ b) = b
 {-# INLINE sup #-}
@@ -182,6 +202,8 @@ instance Show a => Show (Interval a) where
 --
 -- >>> width (singleton 1)
 -- 0
+--
+-- prop> 0 <= width x
 width :: Num a => Interval a -> a
 width (I a b) = b - a
 {-# INLINE width #-}
@@ -243,6 +265,10 @@ instance (Num a, Ord a) => Num (Interval a) where
 --
 -- >>> bisect (singleton 5.0)
 -- (5.0 ... 5.0,5.0 ... 5.0)
+--
+-- prop> let (a, b) = bisect (x :: Interval Double) in sup a == inf b
+-- prop> let (a, b) = bisect (x :: Interval Double) in inf a == inf x
+-- prop> let (a, b) = bisect (x :: Interval Double) in sup b == sup x
 bisect :: Fractional a => Interval a -> (Interval a, Interval a)
 bisect (I a b) = (I a m, I m b) where m = a + (b - a) / 2
 {-# INLINE bisect #-}
@@ -390,6 +416,9 @@ instance RealFrac a => RealFrac (Interval a) where
   truncate x = truncate (midpoint x)
   {-# INLINE truncate #-}
 
+-- | Transcendental functions for intervals.
+--
+-- prop> conservative sin sin
 instance (RealFloat a, Ord a) => Floating (Interval a) where
   pi = singleton pi
   {-# INLINE pi #-}
