@@ -43,6 +43,7 @@ module Numeric.Interval.NonEmpty.Internal
   , clamp
   , inflate, deflate, inflate'
   , scale, symmetric
+  , equivalent
   , idouble
   , ifloat
   ) where
@@ -186,6 +187,9 @@ singular (I a b) = a == b
 instance Eq a => Eq (Interval a) where
   (==) = (==!)
   {-# INLINE (==) #-}
+
+equivalent :: (Eq a) => Interval a -> Interval a -> Bool
+(I ax bx) `equivalent` (I ay by) = ax == ay && bx == by
 
 instance Show a => Show (Interval a) where
   showsPrec n (I a b) =
@@ -744,6 +748,7 @@ inflate' x | x >= 0    = (+ symmetric x)
 --
 -- prop> (x :: Double) >= 0 ==> i `contains` deflate x i
 -- prop> (x :: Double) <= 0 ==> deflate x i `contains` i
+-- prop> inflate (x :: Double) y `equivalent` deflate (negate x) y
 deflate :: (Fractional a, Ord a) => a -> Interval a -> Interval a
 deflate x i@(I a b) | a' <= b'  = I a' b'
                     | otherwise = singleton m
