@@ -386,6 +386,9 @@ divZero x@(I a b)
   | otherwise        = whole
 {-# INLINE divZero #-}
 
+-- | Fractional instance for intervals.
+--
+-- prop> conservative (recip :: Double -> Double) recip
 instance (Fractional a, Ord a) => Fractional (Interval a) where
   -- TODO: check isNegativeZero properly
   x / y@(I a b)
@@ -418,7 +421,20 @@ instance RealFrac a => RealFrac (Interval a) where
 
 -- | Transcendental functions for intervals.
 --
--- prop> conservative sin sin
+-- prop> conservative (exp :: Double -> Double) exp
+-- prop> conservative (log :: Double -> Double) log
+-- prop> conservative (sin :: Double -> Double) sin
+-- prop> conservative (cos :: Double -> Double) cos
+-- prop> conservative (tan :: Double -> Double) tan
+-- prop> conservative (asin :: Double -> Double) asin
+-- prop> conservative (acos :: Double -> Double) acos
+-- prop> conservative (atan :: Double -> Double) atan
+-- prop> conservative (sinh :: Double -> Double) sinh
+-- prop> conservative (cosh :: Double -> Double) cosh
+-- prop> conservative (tanh :: Double -> Double) tanh
+-- prop> conservative (asinh :: Double -> Double) asinh
+-- prop> conservative (acosh :: Double -> Double) acosh
+-- prop> conservative (atanh :: Double -> Double) atanh
 instance (RealFloat a, Ord a) => Floating (Interval a) where
   pi = singleton pi
   {-# INLINE pi #-}
@@ -428,7 +444,7 @@ instance (RealFloat a, Ord a) => Floating (Interval a) where
   {-# INLINE log #-}
   sin = periodic (2 * pi) (symmetric 1) (signum' . cos)          sin
   cos = periodic (2 * pi) (symmetric 1) (signum' . negate . sin) cos
-  tan = periodic (2 * pi) whole         (const GT)               tan -- derivative only has to have correct sign
+  tan = periodic pi       whole         (const GT)               tan -- derivative only has to have correct sign
   asin (I a b) = I (if a <= -1 then -halfPi else asin a) (if b >= 1 then halfPi else asin b)
     where halfPi = pi / 2
   {-# INLINE asin #-}
