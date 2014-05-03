@@ -68,8 +68,7 @@ import Prelude hiding (null, elem, notElem)
 -- >>> default (Integer,Double)
 -- >>> instance (Ord a, Arbitrary a) => Arbitrary (Interval a) where arbitrary = (...) <$> arbitrary <*> arbitrary
 -- >>> let conservative sf f xs = forAll (choose (inf xs, sup xs)) $ \x -> (sf x) `elem` (f xs)
-
---  conservative :: (a -> a) -> (Interval a -> Interval a) -> Interval a -> Bool
+-- >>> let conservative2 sf f xs ys = forAll ((,) <$> choose (inf xs, sup xs) <*> choose (inf ys, sup ys)) $ \(x,y) -> (sf x y) `elem` (f xs ys)
 
 data Interval a = I !a !a deriving
   ( Data
@@ -236,6 +235,12 @@ mignitude :: (Num a, Ord a) => Interval a -> a
 mignitude = inf . abs
 {-# INLINE mignitude #-}
 
+-- | Num instance for intervals.
+--
+-- prop> conservative2 ((+) :: Double -> Double -> Double) (+)
+-- prop> conservative2 ((-) :: Double -> Double -> Double) (-)
+-- prop> conservative2 ((*) :: Double -> Double -> Double) (*)
+-- prop> conservative (abs :: Double -> Double) abs
 instance (Num a, Ord a) => Num (Interval a) where
   I a b + I a' b' = (a + a') ... (b + b')
   {-# INLINE (+) #-}
@@ -388,6 +393,7 @@ divZero x@(I a b)
 
 -- | Fractional instance for intervals.
 --
+-- prop> conservative2 ((/) :: Double -> Double -> Double) (/)
 -- prop> conservative (recip :: Double -> Double) recip
 instance (Fractional a, Ord a) => Fractional (Interval a) where
   -- TODO: check isNegativeZero properly
