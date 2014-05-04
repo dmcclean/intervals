@@ -43,7 +43,7 @@ module Numeric.Interval.NonEmpty.Internal
   , clamp
   , inflate, deflate, inflate'
   , scale, symmetric
-  , equivalent
+  , Intensional(..)
   , idouble
   , ifloat
   ) where
@@ -70,6 +70,8 @@ import Prelude hiding (null, elem, notElem)
 -- >>> instance (Ord a, Arbitrary a) => Arbitrary (Interval a) where arbitrary = (...) <$> arbitrary <*> arbitrary
 -- >>> let conservative sf f xs = forAll (choose (inf xs, sup xs)) $ \x -> (sf x) `elem` (f xs)
 -- >>> let conservative2 sf f xs ys = forAll ((,) <$> choose (inf xs, sup xs) <*> choose (inf ys, sup ys)) $ \(x,y) -> (sf x y) `elem` (f xs ys)
+-- >>> let compose2 = fmap . fmap
+-- >>> let commutative op a b = (a `op` b) == (b `op` a)
 
 data Interval a = I !a !a deriving
   ( Data
@@ -115,6 +117,8 @@ periodic' r LT _  a b = I (inf r) (max a b) -- was going down, started going up
 periodic' _ _  _  a b = a ... b -- includes at least one max/min point
 
 -- | Create a non-empty interval, turning it around if necessary
+--
+-- prop> commutative (compose2 Intensional (...))
 (...) :: Ord a => a -> a -> Interval a
 a ... b
   | a <= b = I a b
@@ -188,9 +192,6 @@ instance Eq a => Eq (Interval a) where
   (==) = (==!)
   {-# INLINE (==) #-}
 
-equivalent :: (Eq a) => Interval a -> Interval a -> Bool
-(I ax bx) `equivalent` (I ay by) = ax == ay && bx == by
-
 instance Show a => Show (Interval a) where
   showsPrec n (I a b) =
     showParen (n > 3) $
@@ -245,6 +246,8 @@ mignitude = inf . abs
 -- prop> conservative2 ((-) :: Double -> Double -> Double) (-)
 -- prop> conservative2 ((*) :: Double -> Double -> Double) (*)
 -- prop> conservative (abs :: Double -> Double) abs
+-- prop> commutative (compose2 Intensional ((+) :: Interval Double -> Interval Double -> Interval Double))
+-- prop> commutative (compose2 Intensional ((*) :: Interval Double -> Interval Double -> Interval Double))
 instance (Num a, Ord a) => Num (Interval a) where
   I a b + I a' b' = (a + a') ... (b + b')
   {-# INLINE (+) #-}
@@ -310,6 +313,8 @@ midpoint (I a b) = a + (b - a) / 2
 --
 -- >>> distance (1 ... 7) (-10 ... -2)
 -- 3
+--
+-- prop> commutative (distance :: Interval Double -> Interval Double -> Double)
 distance :: (Num a, Ord a) => Interval a -> Interval a -> a
 distance i1 i2 = mignitude (i1 - i2)
 
@@ -748,7 +753,7 @@ inflate' x | x >= 0    = (+ symmetric x)
 --
 -- prop> (x :: Double) >= 0 ==> i `contains` deflate x i
 -- prop> (x :: Double) <= 0 ==> deflate x i `contains` i
--- prop> inflate (x :: Double) y `equivalent` deflate (negate x) y
+-- prop> Intensional (inflate (x :: Double) y) == Intensional (deflate (negate x) y)
 deflate :: (Fractional a, Ord a) => a -> Interval a -> Interval a
 deflate x i@(I a b) | a' <= b'  = I a' b'
                     | otherwise = singleton m
@@ -782,6 +787,12 @@ scale x i = a ... b where
 -- -2 ... 2
 symmetric :: (Num a, Ord a) => a -> Interval a
 symmetric x = negate x ... x
+
+newtype Intensional a = Intensional (Interval a)
+  deriving (Show, Data, Typeable)
+
+instance Eq a => Eq (Intensional a) where
+  (Intensional (I a1 b1)) == (Intensional (I a2 b2)) = (a1 == a2) && (b1 == b2)
 
 -- | id function. Useful for type specification
 --
