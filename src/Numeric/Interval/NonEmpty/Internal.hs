@@ -794,6 +794,10 @@ newtype Intensional a = Intensional (Interval a)
 instance Eq a => Eq (Intensional a) where
   (Intensional (I a1 b1)) == (Intensional (I a2 b2)) = (a1 == a2) && (b1 == b2)
 
+instance Ord a => Ord (Intensional a) where
+  compare x y = compare (makePair x) (makePair y)
+    where makePair (Intensional (I a b)) = (a, b)
+
 -- | id function. Useful for type specification
 --
 -- >>> :t idouble (1 ... 3)

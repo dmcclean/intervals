@@ -42,8 +42,9 @@ module Numeric.Interval.NonEmpty
   , certainly, (<!), (<=!), (==!), (>=!), (>!)
   , possibly, (<?), (<=?), (==?), (>=?), (>?)
   , clamp
-  , inflate, deflate
+  , inflate, deflate, inflate'
   , scale, symmetric
+  , Intensional(..)
   , idouble
   , ifloat
   ) where
