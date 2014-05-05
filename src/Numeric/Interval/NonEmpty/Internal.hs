@@ -409,8 +409,8 @@ divZero x@(I a b)
 
 -- | Fractional instance for intervals.
 --
--- prop> conservative2 ((/) :: Double -> Double -> Double) (/)
--- prop> conservative (recip :: Double -> Double) recip
+-- prop> ys /= singleton 0 ==> conservative2 ((/) :: Double -> Double -> Double) (/) xs ys
+-- prop> xs /= singleton 0 ==> conservative (recip :: Double -> Double) recip xs
 instance (Fractional a, Ord a) => Fractional (Interval a) where
   -- TODO: check isNegativeZero properly
   x / y@(I a b)
