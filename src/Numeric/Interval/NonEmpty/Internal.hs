@@ -67,9 +67,10 @@ import Prelude hiding (null, elem, notElem)
 -- >>> :set -XExtendedDefaultRules
 -- >>> default (Integer,Double)
 -- >>> instance (Ord a, Arbitrary a) => Arbitrary (Interval a) where arbitrary = (...) <$> arbitrary <*> arbitrary
--- >>> let conservative sf f xs = forAll (choose (inf xs, sup xs)) $ \x -> (sf x) `elem` (f xs)
--- >>> let conservativeExceptNaN sf f xs = forAll (choose (inf xs, sup xs)) $ \x -> isNaN (sf x) || (sf x) `elem` (f xs)
--- >>> let conservative2 sf f xs ys = forAll ((,) <$> choose (inf xs, sup xs) <*> choose (inf ys, sup ys)) $ \(x,y) -> (sf x y) `elem` (f xs ys)
+-- >>> let elementOf xs = sized $ \n -> case n of { 0 -> pure $ inf xs; 1 -> pure $ sup xs; _ -> choose (inf xs, sup xs); }
+-- >>> let conservative sf f xs = forAll (elementOf xs) $ \x -> (sf x) `elem` (f xs)
+-- >>> let conservativeExceptNaN sf f xs = forAll (elementOf xs) $ \x -> isNaN (sf x) || (sf x) `elem` (f xs)
+-- >>> let conservative2 sf f xs ys = forAll ((,) <$> elementOf xs <*> elementOf ys) $ \(x,y) -> (sf x y) `elem` (f xs ys)
 -- >>> let compose2 = fmap . fmap
 -- >>> let commutative op a b = (a `op` b) == (b `op` a)
 
