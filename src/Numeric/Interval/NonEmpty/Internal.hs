@@ -68,6 +68,7 @@ import Prelude hiding (null, elem, notElem)
 -- >>> default (Integer,Double)
 -- >>> instance (Ord a, Arbitrary a) => Arbitrary (Interval a) where arbitrary = (...) <$> arbitrary <*> arbitrary
 -- >>> let conservative sf f xs = forAll (choose (inf xs, sup xs)) $ \x -> (sf x) `elem` (f xs)
+-- >>> let conservativeExceptNaN sf f xs = forAll (choose (inf xs, sup xs)) $ \x -> isNaN (sf x) || (sf x) `elem` (f xs)
 -- >>> let conservative2 sf f xs ys = forAll ((,) <$> choose (inf xs, sup xs) <*> choose (inf ys, sup ys)) $ \(x,y) -> (sf x y) `elem` (f xs ys)
 -- >>> let compose2 = fmap . fmap
 -- >>> let commutative op a b = (a `op` b) == (b `op` a)
@@ -441,19 +442,19 @@ instance RealFrac a => RealFrac (Interval a) where
 -- | Transcendental functions for intervals.
 --
 -- prop> conservative (exp :: Double -> Double) exp
--- prop> conservative (log :: Double -> Double) log
+-- prop> conservativeExceptNaN (log :: Double -> Double) log
 -- prop> conservative (sin :: Double -> Double) sin
 -- prop> conservative (cos :: Double -> Double) cos
 -- prop> conservative (tan :: Double -> Double) tan
--- prop> conservative (asin :: Double -> Double) asin
--- prop> conservative (acos :: Double -> Double) acos
+-- prop> conservativeExceptNaN (asin :: Double -> Double) asin
+-- prop> conservativeExceptNaN (acos :: Double -> Double) acos
 -- prop> conservative (atan :: Double -> Double) atan
 -- prop> conservative (sinh :: Double -> Double) sinh
 -- prop> conservative (cosh :: Double -> Double) cosh
 -- prop> conservative (tanh :: Double -> Double) tanh
--- prop> conservative (asinh :: Double -> Double) asinh
--- prop> conservative (acosh :: Double -> Double) acosh
--- prop> conservative (atanh :: Double -> Double) atanh
+-- prop> conservativeExceptNaN (asinh :: Double -> Double) asinh
+-- prop> conservativeExceptNaN (acosh :: Double -> Double) acosh
+-- prop> conservativeExceptNaN (atanh :: Double -> Double) atanh
 instance (RealFloat a, Ord a) => Floating (Interval a) where
   pi = singleton pi
   {-# INLINE pi #-}
@@ -464,10 +465,18 @@ instance (RealFloat a, Ord a) => Floating (Interval a) where
   sin = periodic (2 * pi) (symmetric 1) (signum' . cos)          sin
   cos = periodic (2 * pi) (symmetric 1) (signum' . negate . sin) cos
   tan = periodic pi       whole         (const GT)               tan -- derivative only has to have correct sign
-  asin (I a b) = I (if a <= -1 then -halfPi else asin a) (if b >= 1 then halfPi else asin b)
-    where halfPi = pi / 2
+  asin (I a b) = (asin' a) ... (asin' b)
+    where 
+      asin' x | x >= 1 = halfPi
+              | x <= -1 = -halfPi
+              | otherwise = asin x
+      halfPi = pi / 2
   {-# INLINE asin #-}
-  acos (I a b) = I (if b >= 1 then 0 else acos b) (if a < -1 then pi else acos a)
+  acos (I a b) = (acos' a) ... (acos' b)
+    where
+      acos' x | x >= 1 = 0
+              | x <= -1 = pi
+              | otherwise = acos x
   {-# INLINE acos #-}
   atan = increasing atan
   {-# INLINE atan #-}
@@ -484,11 +493,16 @@ instance (RealFloat a, Ord a) => Floating (Interval a) where
   {-# INLINE tanh #-}
   asinh = increasing asinh
   {-# INLINE asinh #-}
-  acosh (I a b) = I lo $ acosh b
-    where lo | a <= 1 = 0
-             | otherwise = acosh a
+  acosh (I a b) = (acosh' a) ... (acosh' b)
+    where
+      acosh' x | x <= 1 = 0
+               | otherwise = acosh x
   {-# INLINE acosh #-}
-  atanh (I a b) = I (if a <= - 1 then negInfinity else atanh a) (if b >= 1 then posInfinity else atanh b)
+  atanh (I a b) = (atanh' a) ... (atanh' b)
+    where
+      atanh' x | x <= -1 = negInfinity
+               | x >= 1 = posInfinity
+               | otherwise = atanh x
   {-# INLINE atanh #-}
 
 -- | lift a monotone increasing function over a given interval
