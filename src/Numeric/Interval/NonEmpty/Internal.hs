@@ -459,7 +459,7 @@ instance (RealFloat a, Ord a) => Floating (Interval a) where
   {-# INLINE pi #-}
   exp = increasing exp
   {-# INLINE exp #-}
-  log (I a b) = (if a > 0 then log a else negInfinity) ... log b
+  log (I a b) = (if a > 0 then log a else negInfinity) ... (if b > 0 then log b else negInfinity)
   {-# INLINE log #-}
   sin = periodic (2 * pi) (symmetric 1) (signum' . cos)          sin
   cos = periodic (2 * pi) (symmetric 1) (signum' . negate . sin) cos
