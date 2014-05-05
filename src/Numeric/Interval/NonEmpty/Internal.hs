@@ -549,6 +549,9 @@ intersection x@(I a b) y@(I a' b')
 --
 -- >>> hull (15 ... 85 :: Interval Double) (0 ... 10 :: Interval Double)
 -- 0.0 ... 85.0
+--
+-- prop> conservative2 const hull
+-- prop> conservative2 (flip const) hull
 hull :: Ord a => Interval a -> Interval a -> Interval a
 hull (I a b) (I a' b') = I (min a a') (max b b')
 {-# INLINE hull #-}
@@ -774,7 +777,8 @@ deflate x i@(I a b) | a' <= b'  = I a' b'
 -- >>> scale (-2.0) (-1.0 ... 1.0)
 -- -2.0 ... 2.0
 --
--- prop> x >=1 ==> (scale (x :: Double) i) `contains` i
+-- prop> abs x >= 1 ==> (scale (x :: Double) i) `contains` i
+-- prop> forAll (choose (0,1)) $ \x -> abs x <= 1 ==> i `contains` (scale (x :: Double) i)
 scale :: (Fractional a, Ord a) => a -> Interval a -> Interval a
 scale x i = a ... b where
   h = x * width i / 2
@@ -789,6 +793,9 @@ scale x i = a ... b where
 --
 -- >>> symmetric (-2)
 -- -2 ... 2
+--
+-- prop> x `elem` symmetric x
+-- prop> 0 `elem` symmetric x
 symmetric :: (Num a, Ord a) => a -> Interval a
 symmetric x = negate x ... x
 
