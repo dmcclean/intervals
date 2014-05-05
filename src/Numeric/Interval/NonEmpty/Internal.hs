@@ -51,7 +51,6 @@ module Numeric.Interval.NonEmpty.Internal
 import Control.Exception as Exception
 import Data.Data
 import Data.Foldable hiding (minimum, maximum, elem, notElem)
-import Data.Function (on)
 import Data.Monoid
 #if defined(__GLASGOW_HASKELL) && __GLASGOW_HASKELL__ >= 704
 import GHC.Generics
@@ -222,6 +221,8 @@ width (I a b) = b - a
 --
 -- >>> magnitude (singleton 5)
 -- 5
+--
+-- prop> 0 <= magnitude x
 magnitude :: (Num a, Ord a) => Interval a -> a
 magnitude = sup . abs
 {-# INLINE magnitude #-}
@@ -236,6 +237,8 @@ magnitude = sup . abs
 --
 -- >>> mignitude (singleton 5)
 -- 5
+--
+-- prop> 0 <= mignitude x
 mignitude :: (Num a, Ord a) => Interval a -> a
 mignitude = inf . abs
 {-# INLINE mignitude #-}
@@ -299,6 +302,8 @@ bisectIntegral (I a b)
 --
 -- >>> midpoint (singleton 5.0)
 -- 5.0
+--
+-- prop> midpoint x `elem` (x :: Interval Double)
 midpoint :: Fractional a => Interval a -> a
 midpoint (I a b) = a + (b - a) / 2
 {-# INLINE midpoint #-}
@@ -315,6 +320,7 @@ midpoint (I a b) = a + (b - a) / 2
 -- 3
 --
 -- prop> commutative (distance :: Interval Double -> Interval Double -> Double)
+-- prop> 0 <= distance x y
 distance :: (Num a, Ord a) => Interval a -> Interval a -> a
 distance i1 i2 = mignitude (i1 - i2)
 
