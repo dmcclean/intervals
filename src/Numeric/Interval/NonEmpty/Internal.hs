@@ -463,6 +463,9 @@ instance RealFrac a => RealFrac (Interval a) where
 -- prop> conservativeExceptNaN (asinh :: Double -> Double) asinh
 -- prop> conservativeExceptNaN (acosh :: Double -> Double) acosh
 -- prop> conservativeExceptNaN (atanh :: Double -> Double) atanh
+--
+-- >>> cos (0 ... (pi + 0.1))
+-- -1.0 ... 1.0
 instance (RealFloat a, Ord a) => Floating (Interval a) where
   pi = singleton pi
   {-# INLINE pi #-}
